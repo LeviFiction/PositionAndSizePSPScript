@@ -8,6 +8,5 @@ The PhotoImpact dialog I was shown in a screenshot had two frame labels, one for
 
 ## How I will accomplish this
 The GUI will be made in the only way possible without doing something annoying or weird with input boxes, with Tkinter.
-I'm having trouble working with LabelFrames.  Will need to investigate further.  Can a frame be embedded in a frame?
 
 Once all settings are set the pick tool command will be used to convert given coordinates to pixels and the distortion will be made.  If only position changes and not original size then the mover command will be used as it's faster.  PSP assumes distortion when Pick is used and sends it through that command slowing things down.  Mover simply moves the layer.  
