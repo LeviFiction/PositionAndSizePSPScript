@@ -4,6 +4,7 @@ try:
     from Tkinter import *
 except:
     from tkinter import *
+import ttk
 
 def ScriptProperties():
     return {
@@ -27,79 +28,96 @@ class GuideGrid(Frame):
         info = App.Do( Environment, 'ReturnImageInfo')
         self.iPPU = info['PixelsPerUnit'] * 1.0
         self.iUnit = 1 if info['Unit'] == "Inches" else 2
+        self.get_object_size()
 
-        self.option_add('*Font', 'Verdana 10')
+        self.option_add('*Font', '{Microsoft Sans Serif} 8')
         #self.pack(expand=YES, fill=BOTH)
         self.master.title("Set Location")
         self.master.resizable(NO,NO)    # don't allow the dialog to be resizable
         self.margins = StringVar()
-        self.top_box = StringVar()
-        self.left_box = StringVar()
+        self.top_box_var = StringVar()
+        self.left_box_var = StringVar()
         self.width_box = StringVar()
         self.height_box = StringVar()
-        self.marginsUnits = StringVar()
         self.size_units = StringVar()
-        self.tWidth = StringVar()
-        self.tHeight = StringVar()
-        self.marginsPixels = self.iPPU
         self.maintain_aspect = IntVar()
+        self.lock_position = IntVar()
+        self.lock_position.set(0)
         
+        self.ui_style = ttk.Style()
+        self.ui_style.configure('text.TLabel', font="helvetica 24")
+
         #UI Elements
         main_frame = Frame(self.master)
         main_frame.pack(expand=True, fill=BOTH, side=LEFT, padx=10, pady=10, ipadx=10, ipady=10)
 
-        position_box = LabelFrame(main_frame, text='Position', padx=10,pady=10)
-        # position_box.grid(row=0, column=0, padx=10, pady=10, sticky="w")
+        position_box = ttk.LabelFrame(main_frame, text='Position')
         position_box.pack(expand=True, fill=X)
-        Label(position_box, text="Left: ").grid(row=0, column=0, padx=5, pady=10)
-        Spinbox(position_box, textvariable = self.left_box, from_=0, to=self.imageWidth, width=5).grid(row=0,column=1, padx=5, pady=10)
-        Label(position_box, text="Top: ").grid(row=0, column=3, padx=5, pady=10)
-        Spinbox(position_box, textvariable = self.top_box, from_=0, to=self.imageHeight, width=5).grid(row=0,column=4, padx=5, pady=10)
 
-        size_box = LabelFrame(main_frame, text='Size', padx=10, pady=10)
-        # size_box.grid(row=1, column=0, padx=10, pady=10)
+        ttk.Label(position_box, text="Left:", style='text.TLabel').grid(row=0, column=0, padx=5, pady=10)
+        self.left_box = Spinbox(position_box, textvariable = self.left_box_var, from_=0, to=self.imageWidth, width=6, increment=.5)
+        self.left_box.grid(row=0,column=1, padx=5, pady=10)
+
+        ttk.Label(position_box, text="Top:").grid(row=0, column=2, padx=5, pady=10)
+        self.top_box = Spinbox(position_box, textvariable = self.top_box_var, from_=0, to=self.imageHeight, width=6, increment=.5)
+        self.top_box.grid(row=0,column=3, padx=5, pady=10)
+
+        locked = ttk.Checkbutton(position_box, text="Lock",variable=self.lock_position)
+        locked.grid(row=0,column=4,padx=5, pady=10)
+
+        size_box = ttk.LabelFrame(main_frame, text='Size')
         size_box.pack(expand=True, fill="x")
-        Label(size_box, text="Width: ").grid(row=1, column=0, padx=5, pady=10)
-        Spinbox(size_box, textvariable = self.left_box, from_=0, to=self.imageWidth, width=5).grid(row=1,column=1, padx=5, pady=10)
-        Label(size_box, text="Height: ").grid(row=2, column=0, padx=5, pady=10)
-        Spinbox(size_box, textvariable = self.top_box, from_=0, to=self.imageHeight, width=5).grid(row=2,column=1, padx=5, pady=10)
-        Label(size_box, text="Unit: ").grid(row=3, column = 0, padx=5, pady=10, sticky="w")
-        OptionMenu(size_box, self.size_units, "Pixels","Inches", "Centimeters").grid(row=3, column=1, columnspan=4, padx=5, pady=10, sticky="w")
 
-        #self.oOptions = 
-        Checkbutton(size_box, variable = self.maintain_aspect, text = "Keep aspect ratio").grid(row = 1, column = 3, columnspan=4, padx=5, pady=10, sticky="w")
+        ttk.Label(size_box, text="Width:").grid(row=1, column=0, padx=5, pady=10)
+        Spinbox(size_box, textvariable = self.width_box, from_=0.0, to=self.imageWidth*1.0, width=6, increment=.5).grid(row=1,column=1, padx=5, pady=10)
+        
+        ttk.Label(size_box, text="Height:").grid(row=2, column=0, padx=5, pady=10)
+        Spinbox(size_box, textvariable = self.height_box, from_=0.0, to=self.imageHeight*1.0, width=6, increment=.5).grid(row=2,column=1, padx=5, pady=10)
+        
+        ttk.Label(size_box, text="Unit:").grid(row=3, column = 0, padx=5, pady=10, sticky="w")
+        su = ttk.OptionMenu(size_box, self.size_units,None, "Pixels","Inches", "Centimeters")
+        su.config(width=11)
+        su.grid(row=3, column=1, columnspan=4, padx=5, pady=10, sticky="w")
+
+        ttk.Checkbutton(size_box, variable = self.maintain_aspect, text = "Keep aspect ratio").grid(row = 1, column = 3, columnspan=4, padx=5, pady=10, sticky="w")
 
         button_frame = Frame(self.master)
-        button_frame.pack(expand=True, fill=Y, side=RIGHT, padx=10, pady=10) #.grid(row=0, column=1, padx=10, pady=10)
-        Button(button_frame, text="Add", command=self.modify_object,width=6).grid(row=0,column=0,pady=10)
-        Button(button_frame, text="Cancel", command=self.callback,width=6).grid(row=1,column=0,)
-        
+        button_frame.pack(expand=True, fill=Y, side=RIGHT, padx=10, pady=10)
+        ttk.Button(button_frame, text="OK", command=self.modify_object,width=10).grid(row=0,column=0,pady=10)
+        ttk.Button(button_frame, text="Cancel", command=self.callback,width=10).grid(row=1,column=0,)
+
         #set Variables
-        self.tWidth.set(750)
-        self.tHeight.set(500)
-        self.marginsUnits.set("Inches" if self.iUnit == 1 else "Centimeters")
+        self.top_box_var.set(self.top)
+        self.left_box_var.set(self.left)
+        self.width_box.set(self.width)
+        self.height_box.set(self.height)
         self.size_units.set("Inches" if self.iUnit == 1 else "Centimeters")
         self.oldUnits = self.iUnit
         
         #Add tracers to the variables
-        self.tWidth.trace("w", lambda name, index, mode, s=self.tWidth: self.modified(s))
-        self.tHeight.trace("w", lambda name, index, mode, s=self.tHeight: self.modified(s))
+        self.lock_position.trace("w", lambda name, index, mode, s=self.lock_position: self.lock_pos(s))
         self.margins.trace("w", lambda name, index, mode, s=self.margins: self.modifiedValue(s))
-        self.marginsUnits.trace("w", lambda name, index, mode, s=self.marginsUnits: self.modifiedUnits(s))
     
         self.margins.set(1)
+
+    def lock_pos(self, position):
+        val = position.get()
+        if val == 0:
+            self.top_box.config(state=NORMAL)
+            self.left_box.config(state=NORMAL)
+        else:
+            self.top_box.config(state=DISABLED)
+            self.left_box.config(state=DISABLED)
 
     def get_object_size(self):
         env = self.Environment
         rect = App.Do(env, 'GetVectorSelectionRect')['VectorRect']
         self.width = rect[1]
-        self.height = rect[1]
+        self.height = rect[2]
         self.top = rect[0][1]
-        self.top = rect[0][0]
-
+        self.left = rect[0][0]
 
     def convertUnits(self, ounit, nunit, value):
-
         if ounit != nunit:
             if ounit == 1:
                 value = value / 2.54
@@ -147,9 +165,8 @@ class GuideGrid(Frame):
         self.oldUnits = mUnits
     
     def modify_object(self):
-
+        #TODO: Modify layer/object based on incoming info
         self.master.destroy()
-    
     
     def callback(self):
         self.master.destroy()
