@@ -1,0 +1,150 @@
+from PSPApp import *
+import math
+try:
+    from Tkinter import *
+except:
+    from tkinter import *
+
+def ScriptProperties():
+    return {
+        'Author': u'LeviFiction',
+        'Copyright': u'Copyright (c) 2022 LeviFiction, All rights reserved.',
+        'Description': u'Resize and position any item',
+        'Host': u'PaintShop Pro',
+        'Host Version': u'9.00'
+        }
+
+# The dialog is represented by a class
+class GuideGrid(Frame):
+    def __init__(self, Environment):
+        Frame.__init__(self)
+        self.master.protocol("WM_DELETE_WINDOW", self.callback)
+        
+        #variables
+        self.Environment = Environment
+        self.imageWidth = App.TargetDocument.Width
+        self.imageHeight = App.TargetDocument.Height
+        info = App.Do( Environment, 'ReturnImageInfo')
+        self.iPPU = info['PixelsPerUnit'] * 1.0
+        self.iUnit = 1 if info['Unit'] == "Inches" else 2
+
+        self.option_add('*Font', 'Verdana 10')
+        #self.pack(expand=YES, fill=BOTH)
+        self.master.title("Set Location")
+        self.master.resizable(NO,NO)    # don't allow the dialog to be resizable
+        self.margins = StringVar()
+        self.top_box = StringVar()
+        self.left_box = StringVar()
+        self.width_box = StringVar()
+        self.height_box = StringVar()
+        self.marginsUnits = StringVar()
+        self.size_units = StringVar()
+        self.tWidth = StringVar()
+        self.tHeight = StringVar()
+        self.marginsPixels = self.iPPU
+        self.maintain_aspect = IntVar()
+        #UI Elements
+
+        Label(self.master, text="Left: ").grid(row=0, column=0, padx=5, pady=10)
+        Spinbox(self.master, textvariable = self.left_box, from_=0, to=self.imageWidth, width=5).grid(row=0,column=1, padx=5, pady=10)
+        Label(self.master, text="Top: ").grid(row=0, column=3, padx=5, pady=10)
+        Spinbox(self.master, textvariable = self.top_box, from_=0, to=self.imageHeight, width=5).grid(row=0,column=4, padx=5, pady=10)
+
+        Label(self.master, text="Width: ").grid(row=1, column=0, padx=5, pady=10)
+        Spinbox(self.master, textvariable = self.left_box, from_=0, to=self.imageWidth, width=5).grid(row=1,column=1, padx=5, pady=10)
+        Label(self.master, text="Height: ").grid(row=2, column=0, padx=5, pady=10)
+        Spinbox(self.master, textvariable = self.top_box, from_=0, to=self.imageHeight, width=5).grid(row=2,column=1, padx=5, pady=10)
+        Label(self.master, text="Unit: ").grid(row=3, column = 0, padx=5, pady=10)
+        OptionMenu(self.master, self.size_units, "Pixels","Inches", "Centimeters").grid(row=3, column=1, columnspan=4, padx=5, pady=10, sticky="w")
+
+        #self.oOptions = 
+        Checkbutton(self.master, variable = self.maintain_aspect, text = "Keep aspect ratio").grid(row = 1, column = 3, columnspan=4, padx=5, pady=10)
+        Button(self.master, text="Add", command=self.modify_object,width=6).grid(row=0,column=11,pady=10)
+        Button(self.master, text="Cancel", command=self.callback,width=6).grid(row=1,column=11,padx=5,pady=10)
+        
+        #set Variables
+        self.tWidth.set(750)
+        self.tHeight.set(500)
+        self.marginsUnits.set("Inches" if self.iUnit == 1 else "Centimeters")
+        self.size_units.set("Inches" if self.iUnit == 1 else "Centimeters")
+        self.oldUnits = self.iUnit
+        
+        #Add tracers to the variables
+        self.tWidth.trace("w", lambda name, index, mode, s=self.tWidth: self.modified(s))
+        self.tHeight.trace("w", lambda name, index, mode, s=self.tHeight: self.modified(s))
+        self.margins.trace("w", lambda name, index, mode, s=self.margins: self.modifiedValue(s))
+        self.marginsUnits.trace("w", lambda name, index, mode, s=self.marginsUnits: self.modifiedUnits(s))
+    
+        self.margins.set(1)
+
+    def get_object_size(self):
+        env = self.Environment
+        rect = App.Do(env, 'GetVectorSelectionRect')['VectorRect']
+        self.width = rect[1]
+        self.height = rect[1]
+        self.top = rect[0][1]
+        self.top = rect[0][0]
+
+
+    def convertUnits(self, ounit, nunit, value):
+
+        if ounit != nunit:
+            if ounit == 1:
+                value = value / 2.54
+            elif ounit == 2:
+                value = value * 2.54
+        return value
+        
+    def modified(self, s):
+        if self.tWidth.get() == "":
+            tWidth = 1
+        else:
+            tWidth = int(self.tWidth.get())
+              
+        if self.tHeight.get() == "":
+            tHeight = 1
+        else:
+            tHeight = int(self.tHeight.get())
+              
+    def modifiedValue(self, s):
+        pass
+        
+    def modifiedUnits(self, s):
+        if self.marginsUnits.get() == "Inches":
+            mUnits = 1
+        elif self.marginsUnits.get() == "Centimeters":
+            mUnits = 2
+        else:
+            mUnits = 0
+        
+        if self.margins.get() == "":
+            margins = 0
+        else:
+            margins = float(self.margins.get())
+        
+        if self.oldUnits != 0:
+            self.marginsPixels = margins * self.convertUnits(self.iUnit, self.oldUnits, self.iPPU)
+        else:
+            self.marginsPixels = int(float(self.margins.get()))
+            
+        if mUnits == 0:
+            self.margins.set(self.marginsPixels)
+        else:
+            self.margins.set(self.marginsPixels / self.convertUnits(self.iUnit, mUnits, self.iPPU))
+        
+        self.oldUnits = mUnits
+    
+    def modify_object(self):
+
+        self.master.destroy()
+    
+    
+    def callback(self):
+        self.master.destroy()
+                    
+def Do(Environment):
+    # Run the AddBorders custom dialog
+    Wnd = GuideGrid(Environment)
+    App.Do( Environment, 'StartForeignWindow', { 'WindowHandle': int(Wnd.winfo_id()) } )
+    Wnd.mainloop()
+    App.Do( Environment, 'StartForeignWindow', { 'WindowHandle': 0 } )
