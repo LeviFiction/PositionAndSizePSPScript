@@ -43,24 +43,36 @@ class GuideGrid(Frame):
         self.tHeight = StringVar()
         self.marginsPixels = self.iPPU
         self.maintain_aspect = IntVar()
+        
         #UI Elements
+        main_frame = Frame(self.master)
+        main_frame.pack(expand=True, fill=BOTH, side=LEFT, padx=10, pady=10, ipadx=10, ipady=10)
 
-        Label(self.master, text="Left: ").grid(row=0, column=0, padx=5, pady=10)
-        Spinbox(self.master, textvariable = self.left_box, from_=0, to=self.imageWidth, width=5).grid(row=0,column=1, padx=5, pady=10)
-        Label(self.master, text="Top: ").grid(row=0, column=3, padx=5, pady=10)
-        Spinbox(self.master, textvariable = self.top_box, from_=0, to=self.imageHeight, width=5).grid(row=0,column=4, padx=5, pady=10)
+        position_box = LabelFrame(main_frame, text='Position', padx=10,pady=10)
+        # position_box.grid(row=0, column=0, padx=10, pady=10, sticky="w")
+        position_box.pack(expand=True, fill=X)
+        Label(position_box, text="Left: ").grid(row=0, column=0, padx=5, pady=10)
+        Spinbox(position_box, textvariable = self.left_box, from_=0, to=self.imageWidth, width=5).grid(row=0,column=1, padx=5, pady=10)
+        Label(position_box, text="Top: ").grid(row=0, column=3, padx=5, pady=10)
+        Spinbox(position_box, textvariable = self.top_box, from_=0, to=self.imageHeight, width=5).grid(row=0,column=4, padx=5, pady=10)
 
-        Label(self.master, text="Width: ").grid(row=1, column=0, padx=5, pady=10)
-        Spinbox(self.master, textvariable = self.left_box, from_=0, to=self.imageWidth, width=5).grid(row=1,column=1, padx=5, pady=10)
-        Label(self.master, text="Height: ").grid(row=2, column=0, padx=5, pady=10)
-        Spinbox(self.master, textvariable = self.top_box, from_=0, to=self.imageHeight, width=5).grid(row=2,column=1, padx=5, pady=10)
-        Label(self.master, text="Unit: ").grid(row=3, column = 0, padx=5, pady=10)
-        OptionMenu(self.master, self.size_units, "Pixels","Inches", "Centimeters").grid(row=3, column=1, columnspan=4, padx=5, pady=10, sticky="w")
+        size_box = LabelFrame(main_frame, text='Size', padx=10, pady=10)
+        # size_box.grid(row=1, column=0, padx=10, pady=10)
+        size_box.pack(expand=True, fill="x")
+        Label(size_box, text="Width: ").grid(row=1, column=0, padx=5, pady=10)
+        Spinbox(size_box, textvariable = self.left_box, from_=0, to=self.imageWidth, width=5).grid(row=1,column=1, padx=5, pady=10)
+        Label(size_box, text="Height: ").grid(row=2, column=0, padx=5, pady=10)
+        Spinbox(size_box, textvariable = self.top_box, from_=0, to=self.imageHeight, width=5).grid(row=2,column=1, padx=5, pady=10)
+        Label(size_box, text="Unit: ").grid(row=3, column = 0, padx=5, pady=10, sticky="w")
+        OptionMenu(size_box, self.size_units, "Pixels","Inches", "Centimeters").grid(row=3, column=1, columnspan=4, padx=5, pady=10, sticky="w")
 
         #self.oOptions = 
-        Checkbutton(self.master, variable = self.maintain_aspect, text = "Keep aspect ratio").grid(row = 1, column = 3, columnspan=4, padx=5, pady=10)
-        Button(self.master, text="Add", command=self.modify_object,width=6).grid(row=0,column=11,pady=10)
-        Button(self.master, text="Cancel", command=self.callback,width=6).grid(row=1,column=11,padx=5,pady=10)
+        Checkbutton(size_box, variable = self.maintain_aspect, text = "Keep aspect ratio").grid(row = 1, column = 3, columnspan=4, padx=5, pady=10, sticky="w")
+
+        button_frame = Frame(self.master)
+        button_frame.pack(expand=True, fill=Y, side=RIGHT, padx=10, pady=10) #.grid(row=0, column=1, padx=10, pady=10)
+        Button(button_frame, text="Add", command=self.modify_object,width=6).grid(row=0,column=0,pady=10)
+        Button(button_frame, text="Cancel", command=self.callback,width=6).grid(row=1,column=0,)
         
         #set Variables
         self.tWidth.set(750)
