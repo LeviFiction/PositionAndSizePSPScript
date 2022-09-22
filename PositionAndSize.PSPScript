@@ -16,10 +16,10 @@ def ScriptProperties():
         }
 
 # The dialog is represented by a class
-class GuideGrid(Frame):
+class PositionAndSize(Frame):
     def __init__(self, Environment):
         Frame.__init__(self)
-        self.master.protocol("WM_DELETE_WINDOW", self.callback)
+        self.master.protocol("WM_DELETE_WINDOW", self.destroy_window)
         
         #variables
         self.Environment = Environment
@@ -28,13 +28,22 @@ class GuideGrid(Frame):
         info = App.Do( Environment, 'ReturnImageInfo')
         self.iPPU = info['PixelsPerUnit'] * 1.0
         self.iUnit = 1 if info['Unit'] == "Inches" else 2
+        
+        # Object Initial data
+        self.width = 0
+        self.height = 0
+        self.top = 0
+        self.left = 0
+        self.ar = 1
+
         self.get_object_size()
 
+        # Set intiail UI
         self.option_add('*Font', '{Microsoft Sans Serif} 8')
-        #self.pack(expand=YES, fill=BOTH)
         self.master.title("Set Location")
         self.master.resizable(NO,NO)    # don't allow the dialog to be resizable
-        self.margins = StringVar()
+
+        # UI Variables
         self.top_box_var = StringVar()
         self.left_box_var = StringVar()
         self.width_box = StringVar()
@@ -42,19 +51,21 @@ class GuideGrid(Frame):
         self.size_units = StringVar()
         self.maintain_aspect = IntVar()
         self.lock_position = IntVar()
-        self.lock_position.set(0)
         
         self.ui_style = ttk.Style()
-        self.ui_style.configure('text.TLabel', font="helvetica 24")
 
-        #UI Elements
+        # UI Elements
+
+        # Frame for stacking 2 label frames on top of each other
         main_frame = Frame(self.master)
         main_frame.pack(expand=True, fill=BOTH, side=LEFT, padx=10, pady=10, ipadx=10, ipady=10)
 
+        # LabelFrame for Position related widgets
         position_box = ttk.LabelFrame(main_frame, text='Position')
         position_box.pack(expand=True, fill=X)
 
-        ttk.Label(position_box, text="Left:", style='text.TLabel').grid(row=0, column=0, padx=5, pady=10)
+        # Position related widgets
+        ttk.Label(position_box, text="Left:").grid(row=0, column=0, padx=5, pady=10)
         self.left_box = Spinbox(position_box, textvariable = self.left_box_var, from_=0, to=self.imageWidth, width=6, increment=.5)
         self.left_box.grid(row=0,column=1, padx=5, pady=10)
 
@@ -65,9 +76,11 @@ class GuideGrid(Frame):
         locked = ttk.Checkbutton(position_box, text="Lock",variable=self.lock_position)
         locked.grid(row=0,column=4,padx=5, pady=10)
 
+        # LabelFrame for size realted widgets
         size_box = ttk.LabelFrame(main_frame, text='Size')
         size_box.pack(expand=True, fill="x")
 
+        # Size related Widgets
         ttk.Label(size_box, text="Width:").grid(row=1, column=0, padx=5, pady=10)
         Spinbox(size_box, textvariable = self.width_box, from_=0.0, to=self.imageWidth*1.0, width=6, increment=.5).grid(row=1,column=1, padx=5, pady=10)
         
@@ -81,24 +94,31 @@ class GuideGrid(Frame):
 
         ttk.Checkbutton(size_box, variable = self.maintain_aspect, text = "Keep aspect ratio").grid(row = 1, column = 3, columnspan=4, padx=5, pady=10, sticky="w")
 
+        # Frame for OK and Cancel buttons to the right of main_frame
         button_frame = Frame(self.master)
         button_frame.pack(expand=True, fill=Y, side=RIGHT, padx=10, pady=10)
-        ttk.Button(button_frame, text="OK", command=self.modify_object,width=10).grid(row=0,column=0,pady=10)
-        ttk.Button(button_frame, text="Cancel", command=self.callback,width=10).grid(row=1,column=0,)
 
-        #set Variables
+        # OK and Cancel buttons
+        ttk.Button(button_frame, text="OK", command=self.modify_object,width=10).grid(row=0,column=0,pady=10)
+        ttk.Button(button_frame, text="Cancel", command=self.destroy_window,width=10).grid(row=1,column=0,)
+
+        #set Variable UI initial data
         self.top_box_var.set(self.top)
         self.left_box_var.set(self.left)
         self.width_box.set(self.width)
         self.height_box.set(self.height)
         self.size_units.set("Inches" if self.iUnit == 1 else "Centimeters")
         self.oldUnits = self.iUnit
-        
+        self.lock_position.set(0)
+        self.maintain_aspect.set(1)
+        self.last_updated = 'width'
+        self.dont_update_box = False
+
         #Add tracers to the variables
         self.lock_position.trace("w", lambda name, index, mode, s=self.lock_position: self.lock_pos(s))
-        self.margins.trace("w", lambda name, index, mode, s=self.margins: self.modifiedValue(s))
-    
-        self.margins.set(1)
+        self.maintain_aspect.trace("w", lambda name, index, mode, s=self.maintain_aspect: self.update_ar(s))
+        self.width_box.trace("w", lambda name, index, mode: self.size_updated('width'))
+        self.height_box.trace("w", lambda name, index, mode: self.size_updated('height'))
 
     def lock_pos(self, position):
         val = position.get()
@@ -109,6 +129,35 @@ class GuideGrid(Frame):
             self.top_box.config(state=DISABLED)
             self.left_box.config(state=DISABLED)
 
+    def size_updated(self, box):
+        if self.dont_update_box:
+            self.dont_update_box = False
+            return
+        self.last_updated = box
+        self.update_ar(self.maintain_aspect)
+
+    def update_ar(self, use_ratio):
+        '''Aspect Ratio checkbox changed'''
+        if use_ratio.get() == 1:
+            self.dont_update_box = True
+            units = self.size_units.get()
+            if units == "Pixels":
+                print("pixesl")
+                # Use Int
+                height = int(float(self.height_box.get()))
+                width = int(float(self.width_box.get()))
+            else:
+                print("else")
+                # Use float
+                height = float(self.height_box.get())
+                width = float(self.width_box.get())                
+            # Use aspect ratio, use last_updated to update the other box
+            # We divided to get AR so height = width/ar and width = height*ar
+            if self.last_updated == 'width':
+                self.height_box.set(width/self.ar)
+            else:
+                self.width_box.set(height*self.ar)
+
     def get_object_size(self):
         env = self.Environment
         rect = App.Do(env, 'GetVectorSelectionRect')['VectorRect']
@@ -116,6 +165,7 @@ class GuideGrid(Frame):
         self.height = rect[2]
         self.top = rect[0][1]
         self.left = rect[0][0]
+        self.ar = self.width / self.height
 
     def convertUnits(self, ounit, nunit, value):
         if ounit != nunit:
@@ -168,12 +218,12 @@ class GuideGrid(Frame):
         #TODO: Modify layer/object based on incoming info
         self.master.destroy()
     
-    def callback(self):
+    def destroy_window(self):
         self.master.destroy()
                     
 def Do(Environment):
     # Run the AddBorders custom dialog
-    Wnd = GuideGrid(Environment)
+    Wnd = PositionAndSize(Environment)
     App.Do( Environment, 'StartForeignWindow', { 'WindowHandle': int(Wnd.winfo_id()) } )
     Wnd.mainloop()
     App.Do( Environment, 'StartForeignWindow', { 'WindowHandle': 0 } )
