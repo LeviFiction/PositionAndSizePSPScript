@@ -9,4 +9,10 @@ The PhotoImpact dialog I was shown in a screenshot had two frame labels, one for
 ## How I will accomplish this
 The GUI will be made in the only way possible without doing something annoying or weird with input boxes, with Tkinter.
 
-Once all settings are set the pick tool command will be used to convert given coordinates to pixels and the distortion will be made.  If only position changes and not original size then the mover command will be used as it's faster.  PSP assumes distortion when Pick is used and sends it through that command slowing things down.  Mover simply moves the layer.  
+Once all settings are set the pick tool command will be used to convert given coordinates to pixels and the distortion will be made.  If only the position changes and not the original size then the mover command will be used as it's faster.  PSP assumes distortion when Pick is used and sends it through that command slowing things down.  Mover simply moves the layer.  
+
+## Work completed
+
+The main script has been completed.  This was started again when another complaint about asking for a way to get the size and position of any selected layer or object was raised.  So a new script that just lists the size and position of items was added, as well as the ability to edit them directly.  
+
+The main script can also now do print-based measurements for precise resizing and movement.
